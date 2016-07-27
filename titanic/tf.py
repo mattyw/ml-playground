@@ -1,7 +1,8 @@
 #import tensorflow as tf
 from sklearn import tree
 from sklearn import svm
-#import numpy as np
+import numpy as np
+from tensorflow.contrib import learn
 import csv
 
 
@@ -64,10 +65,6 @@ def kaggle_output_format(data, predictions):
         writer.writerows(output)
     return output
 
-# Targets
-SURVIVED = 1
-DIED = 0
-
 # Data Clean
 Male = 0
 Female = 1
@@ -75,8 +72,8 @@ Female = 1
 if __name__ == '__main__':
     (fm, train) = read_data("train.csv")
     (features, labels) = get_features(train, fm["Survived"],
-        [fm["Pclass"], fm["Sex"], fm["Age"], fm["SibSp"], fm["Parch"]
-    ])
+        [fm["Pclass"], fm["Sex"], fm["Age"]],
+    )
 
 
     from sklearn.cross_validation import train_test_split
@@ -85,9 +82,15 @@ if __name__ == '__main__':
     #from sklearn.neighbors import KNeighborsClassifier
     #classifier = KNeighborsClassifier()
     #classifier = tree.DecisionTreeClassifier()
-    classifier = svm.SVC(kernel="linear")
+    #classifier = svm.SVC(kernel="linear")
+    classifier = learn.DNNClassifier(hidden_units=[10,20,10], n_classes=2)
 
-    classifier.fit(X_train, y_train)
+    X_train = np.array(X_train, dtype=float)
+    y_train = np.array(y_train, dtype=int)
+
+    classifier.fit(X_train, y_train, steps=2000)
+
+    X_test = np.array(X_test, dtype=float)
 
     predictions = classifier.predict(X_test)
 
@@ -97,13 +100,9 @@ if __name__ == '__main__':
     # Do Kaggle test
     (test_fm, test) = read_data("test.csv")
     kaggle_test = features_from_test(test,
-        [test_fm["Pclass"], test_fm["Sex"], test_fm["Age"], test_fm["SibSp"], test_fm["Parch"]])
+        [test_fm["Pclass"], test_fm["Sex"], test_fm["Age"]])
 
-    #classifier = svm.SVC(kernel="linear")
-    classifier = tree.DecisionTreeClassifier()
-
-    classifier.fit(features, labels)
-
+    kaggle_test = np.array(kaggle_test, dtype=float)
     predictions = classifier.predict(kaggle_test)
     kaggle_output_format(test, predictions)
 
