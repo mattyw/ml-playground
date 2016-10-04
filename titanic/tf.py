@@ -101,7 +101,7 @@ class CustomClassifier():
         return prediction
 
 if __name__ == '__main__':
-    feature_keys = ["Sex", "Pclass", "Fare", "Parch", "Age"]
+    feature_keys = ["Sex", "Pclass", "Fare", "Parch"]
     train = read_data("train.csv")
     (features, labels) = get_features(train, feature_keys)
     #for f, l in zip(features, labels):
