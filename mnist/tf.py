@@ -40,7 +40,6 @@ class Stochastic():
         if end > len(self.train):
             self.next_epoch()
             end = self.start + self.batch_size
-        print(self.start, end)
         x, y =  self.train[self.start: end], self.labels[self.start: end]
         self.start = end
         return x,y
@@ -80,5 +79,7 @@ if __name__ == '__main__':
         sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
     correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-    print(correct_prediction)
+    print(sess.run(accuracy, feed_dict={x: images, y_: labels}))
+
+    # Do output
 
