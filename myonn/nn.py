@@ -86,38 +86,44 @@ def read_file(name):
 
 def train_mnist(nn, filename):
     data = read_file(filename)
-    values = []
+    epochs = 5
+    for e in range(epochs):
+        for record in data:
+            all_values = record.split(',')
+            inputs = (np.asfarray(all_values[1:]) / 255.0 * 0.99) + 0.01
+            targets = np.zeros(nn.output_nodes) + 0.01
+            targets[int(all_values[0])] = 0.99
+            nn.train(inputs, targets)
+
+
+# Returns [(expected output, input)]
+def read_test(filename):
+    tests = []
+    data = read_file(filename)
     for record in data:
         all_values = record.split(',')
-        inputs = (np.asfarray(all_values[1:]) / 255.0 * 0.00) * 0.01
-        targets = np.zeros(nn.output_nodes) + 0.01
-        targets[int(all_values[0])] = 0.99
-        nn.train(inputs, targets)
-
-
-# Returns (expected output, input)
-def read_test(filename):
-    data = read_file(filename)
-    values = data[0].split(',')
-    return values[0], (np.asfarray(values[1:]) / 255.0 * 0.00) * 0.01
+        correct_label = int(all_values[0])
+        inputs = (np.asfarray(all_values[1:]) / 255.0 * 0.99) + 0.01
+        tests.append((correct_label, inputs))
+    return tests
 
 
 def mnist():
-    nn = NeuralNetwork(784, 100, 10, 0.3)
-    train_mnist(nn, "mnist_train_100.csv")
-    expected, input = read_test("mnist_test_10.csv")
-    print("expected: ", expected)
-    print(nn.query(input))
-
-
-def test_main():
-    nn = NeuralNetwork(3, 3, 3, 0.3)
-    input = [1.0, 0.5, -1.5]
-    print(nn.query(input))
-    target = [0.5, 1.0, 1.0]
-    for x in range(1000):
-        nn.train(input, target)
-    print(nn.query(input))
+    scorecard = []
+    nn = NeuralNetwork(784, 200, 10, 0.1)
+    train_mnist(nn, "mnist_train.csv")
+    tests = read_test("mnist_test.csv")
+    for expected, input in tests:
+        # print(expected, "correct label")
+        output = nn.query(input)
+        label = np.argmax(output)
+        # print(label, "network's answer")
+        if expected == label:
+            scorecard.append(1)
+        else:
+            scorecard.append(0)
+    scorecard_array = np.asarray(scorecard)
+    print("performance = ", scorecard_array.sum() / scorecard_array.size)
 
 if __name__ == '__main__':
     mnist()
