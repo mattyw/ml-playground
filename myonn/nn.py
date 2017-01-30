@@ -20,31 +20,35 @@ class NeuralNetwork:
         inputs = np.array(input_list, ndmin=2).T
         targets = np.array(target_list, ndmin=2).T
 
-        hidden_inputs = np.dot(self.weights_input_hidden, inputs)
-        hidden_outputs = np.dot(self.weights_hidden_output, hidden_inputs)
-
-        final_inputs = np.dot(self.weights_hidden_output, hidden_outputs)
-        final_outputs = self.activation_function(final_inputs)
+        hidden = self._traverse_layer(inputs, self.weights_input_hidden)
+        final_outputs = self._traverse_layer(hidden, self.weights_hidden_output)
 
         # Find the errors
         output_errors = targets - final_outputs
         hidden_errors = np.dot(self.weights_hidden_output.T, output_errors)
 
         # Update weights for hidden -> output layers
-        self.weights_hidden_output += self.learning_rate * np.dot((output_errors * final_outputs * (1.0 - final_outputs)), np.transpose(hidden_outputs))
+        self.weights_hidden_output += self._update_weight(hidden_outputs, final_outputs, output_errors)
 
         # Update weights for inputs -> output hidden
-        self.weights_input_hidden += self.learning_rate * np.dot((hidden_errors * hidden_outputs * (1.0 - hidden_outputs)), np.transpose(inputs))
+        self.weights_input_hidden += self._update_weight(hidden_errors, hidden_outputs, inputs)
+
+    def _update_weight(self, inputs, outputs, errors):
+        """ Given some inputs -> outputs and the error for each return the adjustment to be made to
+        the weights
+        """
+        return self.learning_rate * np.dot((errors, outputs * (1.0 - outputs)), np.transpose(inputs))
+
+    def _traverse_layer(self, inputs, input_weights):
+        a_input = np.dot(input_weights, inputs)
+        return self.activation_function(a_input)
 
     def query(self, input_list):
         # convert inputs to 2d array (matrix)
         inputs = np.array(input_list, ndmin=2).T
 
-        hidden_inputs = np.dot(self.weights_input_hidden, inputs)
-        hidden_outputs = self.activation_function(hidden_inputs)
-        final_inputs = np.dot(self.weights_hidden_output, hidden_outputs)
-        final_outputs = self.activation_function(final_inputs)
-        return final_outputs
+        hidden = self._traverse_layer(inputs, self.weights_input_hidden)
+        return self._traverse_layer(hidden, self.weights_hidden_output)
 
 if __name__ == '__main__':
     nn = NeuralNetwork(3, 3, 3, 0.3)
