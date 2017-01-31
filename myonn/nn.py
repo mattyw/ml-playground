@@ -39,16 +39,12 @@ class NeuralNetwork:
         targets = np.array(targets_list, ndmin=2).T
 
         # calculate signals into hidden layer
-        hidden_inputs = np.dot(self.weights_input_hidden, inputs)
-
         # calculate the signals emerging from hidden layer
-        hidden_outputs = self.activation_function(hidden_inputs)
+        hidden_outputs = self._traverse_layer(inputs, self.weights_input_hidden)
 
         # calculate signals into final output layer
-        final_inputs = np.dot(self.weights_hidden_output, hidden_outputs)
-
         # calculate the signals emerging from final output layer
-        final_outputs = self.activation_function(final_inputs)
+        final_outputs = self._traverse_layer(hidden_outputs, self.weights_hidden_output)
 
         # output layer error is the (target - actual)
         output_errors = targets - final_outputs
@@ -57,15 +53,15 @@ class NeuralNetwork:
         hidden_errors = np.dot(self.weights_hidden_output.T, output_errors)
 
         # update the weights for the links between the hidden and output layers
-        self.weights_hidden_output += self.learning_rate * np.dot((output_errors * final_outputs * (1.0 - final_outputs)), np.transpose(hidden_outputs))
+        self.weights_hidden_output += self._update_weight(hidden_outputs, final_outputs, output_errors)
         # update the weights for the links between the input and hidden layers
-        self.weights_input_hidden += self.learning_rate * np.dot((hidden_errors * hidden_outputs * (1.0 - hidden_outputs)), np.transpose(inputs))
+        self.weights_input_hidden += self._update_weight(inputs, hidden_outputs, hidden_errors)
 
     def _update_weight(self, inputs, outputs, errors):
         """ Given some inputs -> outputs and the error for each return the adjustment to be made to
         the weights
         """
-        return self.learning_rate * np.dot((errors, outputs * (1.0 - outputs)), np.transpose(inputs))
+        return self.learning_rate * np.dot((errors * outputs * (1.0 - outputs)), np.transpose(inputs))
 
     def _traverse_layer(self, inputs, input_weights):
         a_input = np.dot(input_weights, inputs)
@@ -111,8 +107,8 @@ def read_test(filename):
 def mnist():
     scorecard = []
     nn = NeuralNetwork(784, 200, 10, 0.1)
-    train_mnist(nn, "mnist_train.csv")
-    tests = read_test("mnist_test.csv")
+    train_mnist(nn, "mnist_train_100.csv")
+    tests = read_test("mnist_test_10.csv")
     for expected, input in tests:
         # print(expected, "correct label")
         output = nn.query(input)
